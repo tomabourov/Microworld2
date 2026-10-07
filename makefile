@@ -6,10 +6,10 @@ TARGET=microworld # define the name of the executable
 # DEBUG
 CFLAGS= -c -std=c++17 -g3
 
-LFLAGS= -Llib -lm -lsfml-graphics -lsfml-window -lsfml-system
-SRCDIR = src
+LFLAGS= -L/opt/homebrew/Cellar/sfml/3.0.2/lib -lm -lsfml-graphics -lsfml-window -lsfml-system 
 OBJDIR = obj
-INCLUDE = -Iinc
+INCLUDE = -I/opt/homebrew/Cellar/sfml/3.0.2/include
+SRCDIR = src
 SOURCES = $(foreach d,$(SRCDIR),$(wildcard $(d)/*.cpp))
 OBJECTS = $(foreach d,$(SRCDIR),$(subst $(d),$(OBJDIR),$(wildcard $(d)/*.cpp)))
 
