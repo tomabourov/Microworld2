@@ -139,12 +139,13 @@ protected:
   Costs costs;
   int max_turn;
 
+  WorldModel worldModel;
+  CommandHandler cmds{worldModel};
+
 public:
   AI();
   AI(unsigned id, unsigned agent_speed, std::mt19937_64 *rng, Symbols symbols,
      Costs costs, int max_turn);
   void PrintPercepts(const Percepts &percepts);
   std::vector<std::string> Run(Percepts &percepts, AgentComm *comms);
-
-private:
 };

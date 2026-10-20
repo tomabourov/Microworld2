@@ -272,8 +272,17 @@ void CommandHandler::Explore(const Percepts &percepts) {
   int currX = worldModel.currentCoords.x;
   int currY = worldModel.currentCoords.y;
 
-  std::vector<std::string> exploreSeq = {MoveForward, MoveForward, RotateLeft};
+  std::vector<std::string> exploreSeq;
 
+  if (percepts.forward[0] == "w") {
+      exploreSeq.push_back(RotateRight);
+  } else {
+      exploreSeq.push_back(MoveForward);
+      exploreSeq.push_back(MoveForward);
+      exploreSeq.push_back(MoveForward);
+  }
+      
+  
   QueueCommandGroup(exploreSeq);
 }
 
@@ -384,9 +393,6 @@ AI::AI(unsigned id, unsigned agent_speed, std::mt19937_64 *rng, Symbols symbols,
     : id(id), agent_speed(agent_speed), rng(rng), symbols(symbols),
       costs(costs), max_turn(max_turn) {}
 
-WorldModel worldModel = WorldModel();
-CommandHandler *cmds = new CommandHandler(worldModel);
-
 // PRINT
 void AI::PrintPercepts(const Percepts &percepts) {
   std::cout << "DISTANCE: " << percepts.detector << std::endl;
@@ -427,5 +433,5 @@ std::vector<std::string> AI::Run(Percepts &percepts, AgentComm *comms) {
 
   worldModel.ExploreWorld(percepts);
 
-  return worldModel.UpdateCoords(cmds->ExecuteCommand(percepts));
+  return worldModel.UpdateCoords(cmds.ExecuteCommand(percepts));
 };
