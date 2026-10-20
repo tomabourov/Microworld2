@@ -53,7 +53,7 @@ struct Cell {
 };
 
 class WorldModel {
-private:
+public:
   int minX = 0;
   int maxX = 0;
   int minY = 0;
@@ -91,7 +91,7 @@ private:
 
 public:
   CommandHandler();
-  CommandHandler(WorldModel worldModel);
+  CommandHandler(WorldModel &worldModel);
 
   AgentMode agentMode = AgentMode::Idle;
   WorldModel worldModel;
@@ -137,7 +137,7 @@ protected:
   std::mt19937_64 *rng;
   Symbols symbols;
   Costs costs;
-  int max_turn;
+  int max_turn; 
 
   WorldModel worldModel;
   CommandHandler cmds{worldModel};

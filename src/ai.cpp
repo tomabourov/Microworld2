@@ -1,13 +1,14 @@
 #include "ai.hpp"
 #include "percepts.hpp"
 #include "vec2.hpp"
+#include <climits>
 #include <cstddef>
 #include <cstdint>
 #include <queue>
 #include <string>
 #include <unordered_map>
 #include <vector>
- 
+
 // ############# WORLD MODEL #############
 
 WorldModel::WorldModel() { exploredWorld.insert({currentCoords, {1, "o"}}); };
@@ -43,7 +44,6 @@ void WorldModel::ExploreWorld(Percepts &percepts) {
           {{currentCoords.x + i + 1, currentCoords.y}, {0, percepts.right[i]}});
     };
     break;
-
   case Down:
     for (int i = 0; i < percepts.forward.size(); i++) {
       exploredWorld.insert({{currentCoords.x, currentCoords.y - i - 1},
@@ -206,7 +206,7 @@ void WorldModel::PrintExploredMap() {
 // ############# COMMAND HANDLER #############
 
 CommandHandler::CommandHandler() {};
-CommandHandler::CommandHandler(WorldModel worldModel) {
+CommandHandler::CommandHandler(WorldModel &worldModel) {
   this->worldModel = worldModel;
 };
 
@@ -262,27 +262,109 @@ void CommandHandler::DefuseMine() {
 
   return QueueFrontCommandGroup(defuse_cmd_sequence);
 }
-
 void CommandHandler::Explore(const Percepts &percepts) {
   // I want to explore based on the percepts I have;
   // i want my next move to be determined based on the amount of points i lose
   // if they are all the same,
   auto exploredWorld = worldModel.exploredWorld;
   auto orient = worldModel.orientation;
+
+  int minX = worldModel.minX;
+  int minY = worldModel.minY;
+  int maxX = worldModel.maxX;
+  int maxY = worldModel.maxY;
+
   int currX = worldModel.currentCoords.x;
   int currY = worldModel.currentCoords.y;
 
+  float bestCell = 0.0;
+  int bestX;
+  int bestY;
+
   std::vector<std::string> exploreSeq;
 
-  if (percepts.forward[0] == "w") {
-      exploreSeq.push_back(RotateRight);
-  } else {
-      exploreSeq.push_back(MoveForward);
-      exploreSeq.push_back(MoveForward);
-      exploreSeq.push_back(MoveForward);
+  // iterate through all cells that have been seen/explored
+  // in order to determine which want i want to go to
+  //
+  // The ones that are less explored (i.e. less visits) are the ones
+  // I am more interested in.
+  for (int y = maxY; y >= minY; y--) {
+    for (int x = minX; x <= maxX; x++) {
+      auto it = exploredWorld.find({x, y});
+      if (it == exploredWorld.end()) {
+        continue; // unexplored part of the map - skip.
+      }
+
+      float cellAtractiveness =
+          std::round(1 / (it->second.visits + 1)); // simple, only based on visits;
+
+      // if wall - avoid;
+      // if treasure, go to;
+      if (it->second.cellType == "w") {
+        cellAtractiveness = -1.0;
+      } else if (it->second.cellType == "$") {
+        cellAtractiveness = 2.0;
+      }
+
+      // compare all known cells for the one that holds most promise;
+      if (cellAtractiveness >= bestCell) {
+        bestCell = cellAtractiveness;
+        bestX = it->first.x;
+        bestY = it->first.y;
+      } else {
+          continue;
+      }
+    }
   }
-      
-  
+
+  // determine the amount of moves and type of moves to the cell;
+  int noXMoves = bestX == currX ? 0 : std::abs(bestX - currX); // left or right?
+  int noYMoves = bestY == currY ? 0 : std::abs(bestY - currY); // up or down?
+
+  if (bestX > currX) {
+    if (orient == Up || orient == Down) {
+      exploreSeq.push_back(orient == Up ? RotateRight : RotateLeft);
+    } else if (orient == Left) {
+      exploreSeq.push_back(RotateLeft);
+      exploreSeq.push_back(RotateLeft);
+    }
+  } // right
+  else {
+    if (orient == Up || orient == Down) {
+      exploreSeq.push_back(orient == Up ? RotateLeft : RotateRight);
+    } else if (orient == Right) {
+      exploreSeq.push_back(RotateLeft);
+      exploreSeq.push_back(RotateLeft);
+    }
+
+  } // left
+
+  for (int i = 0; i <= noXMoves; i++) {
+    exploreSeq.push_back(MoveForward);
+  }
+
+  if (bestY > currY) {
+    if (orient == Left || orient == Right) {
+      exploreSeq.push_back(orient == Right ? RotateLeft : RotateRight);
+    } else if (orient == Down) {
+      exploreSeq.push_back(RotateLeft);
+      exploreSeq.push_back(RotateLeft);
+    }
+
+  } // up
+  else {
+    if (orient == Left || orient == Right) {
+      exploreSeq.push_back(orient == Right ? RotateRight : RotateLeft);
+    } else if (orient == Up) {
+      exploreSeq.push_back(RotateLeft);
+      exploreSeq.push_back(RotateLeft);
+    }
+  } // down
+
+  for (int i = 0; i <= noYMoves; i++) {
+    exploreSeq.push_back(MoveForward);
+  }
+
   QueueCommandGroup(exploreSeq);
 }
 
