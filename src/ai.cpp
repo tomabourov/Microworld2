@@ -227,6 +227,7 @@ void CommandHandler::ClearDisarmQueue() {
     QueueFrontCommandGroup({OppositeCmd(lastCmd)});
 
   hasStartedDefusing = false;
+  learned.clear();
   lastCmd = "";
 }
 
@@ -241,18 +242,6 @@ void CommandHandler::DefuseMine() {
   return QueueFrontCommandGroup(defuse_cmd_sequence);
 }
 
-struct CellChoice {
-  int x;
-  int y;
-  float cellScore;
-};
-
-static int Manhattan(Vec2 a, Vec2 b) {
-  return std::abs(a.x - b.x) +
-         std::abs(a.y -
-                  b.y); // abs so direction doesn't matter, only step count
-}
-
 // Helper: is this cell a wall we have already seen?
 static bool IsWall(const WorldModel &wm, Vec2 p) {
   auto it = wm.exploredWorld.find(p); // look the cell up in our map
@@ -260,7 +249,75 @@ static bool IsWall(const WorldModel &wm, Vec2 p) {
          it->second.cellType == "w"; // wall only if we've seen it AND it's "w"
 }
 
-void CommandHandler::Explore(const Percepts &percepts, const WorldModel &wm) {}
+void CommandHandler::Explore(const Percepts &percepts, const WorldModel &wm) {
+  int d = percepts.detector;
+  if (d == 1)
+    return; // mine is next to me
+
+  // if standing on treasure, take it
+  if (percepts.current[0] == "$") {
+    QueueCommandGroup({CollectTreasure});
+    return;
+  }
+
+  Vec2 me = wm.currentCoords;
+
+  // Determine forward and left
+  Vec2 forward = {0, 1}; // Up
+  if (wm.orientation == Down)
+    forward = {0, -1};
+  else if (wm.orientation == Left)
+    forward = {-1, 0};
+  else if (wm.orientation == Right)
+    forward = {1, 0};
+  Vec2 left = {-forward.y, forward.x};
+
+  std::vector<Option> options = {
+      {{me.x + forward.x, me.y + forward.y}, {MoveForward}},
+      {{me.x - forward.x, me.y - forward.y}, {MoveBackward}},
+      {{me.x + left.x, me.y + left.y}, {RotateLeft, MoveForward}},
+      {{me.x - left.x, me.y - left.y}, {RotateRight, MoveForward}},
+  };
+
+  // First time standing here while hunting: optimistic guess
+  if (d >= 2 && learned.find(me) == learned.end())
+    learned[me] = d - 1;
+
+  int bestScore = INT_MAX;
+  const Option *best = nullptr;
+
+  for (const Option &opt : options) {
+
+    // never step into walls or explored cells
+    auto it = wm.exploredWorld.find(opt.cell);
+    if (it == wm.exploredWorld.end() || IsWall(wm, opt.cell))
+      continue; 
+
+    int score;
+    if (d >= 2) {
+      auto l = learned.find(opt.cell);
+      score = 1 + (l != learned.end() ? l->second : d - 2);
+    } else {
+      // No mines left (-1): go where we've been least
+      score = it->second.visits;
+    }
+
+    if (score < bestScore) {
+      bestScore = score;
+      best = &opt;
+    }
+  }
+  if (best == nullptr) {
+    QueueCommandGroup({RotateRight}); // boxed in or can't see: look around
+    return;
+  }
+
+  // Learning rule: this cell is at least as far as its best exit
+  if (d >= 2)
+    learned[me] = std::max(learned[me], bestScore);
+
+  QueueCommandGroup(best->cmds);
+}
 
 std::vector<std::string>
 CommandHandler::ExecuteCommand(const Percepts &percepts, const WorldModel &wm) {

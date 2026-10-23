@@ -15,6 +15,11 @@ enum AgentMode { Defusing = 0, Exploring, Idle };
 
 enum Orientation { Up = 0, Down, Left, Right };
 
+struct Option {
+  Vec2 cell;
+  std::vector<std::string> cmds;
+};
+
 struct Cells {
   const std::string Wall = "w";
   const std::string OpenSpace = "o";
@@ -90,13 +95,12 @@ private:
   std::queue<std::string> cmd_queue;
 
 public:
-  CommandHandler();
-  CommandHandler(WorldModel &worldModel);
-
   AgentMode agentMode = AgentMode::Idle;
-  WorldModel worldModel;
 
   int mineDetector;
+
+  std::unordered_map<Vec2, int, Vec2Hash> learned;
+  
   int noDisarmCmds;
   std::string lastCmd;
   bool hasStartedDefusing = false;
@@ -122,11 +126,11 @@ public:
 
   void DefuseMine();
 
-  void Explore(const Percepts &percepts);
+  void Explore(const Percepts &percepts, const WorldModel &wm);
   
   void PrintCmdQueue(std::queue<std::string> q);
 
-  std::vector<std::string> ExecuteCommand(const Percepts &percepts);
+  std::vector<std::string> ExecuteCommand(const Percepts &percepts, const WorldModel &wm);
 };
 
 class AI {
@@ -140,7 +144,7 @@ protected:
   int max_turn; 
 
   WorldModel worldModel;
-  CommandHandler cmds{worldModel};
+  CommandHandler cmds;
 
 public:
   AI();
