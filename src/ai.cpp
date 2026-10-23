@@ -1,9 +1,7 @@
 #include "ai.hpp"
 #include "percepts.hpp"
 #include "vec2.hpp"
-#include <climits>
 #include <cstddef>
-#include <cstdint>
 #include <queue>
 #include <string>
 #include <unordered_map>
@@ -74,14 +72,16 @@ void WorldModel::ExploreWorld(Percepts &percepts) {
     break;
   case Right:
     for (int i = 0; i < percepts.forward.size(); i++) {
-      exploredWorld[{currentCoords.x + i + 1, currentCoords.y}] = 
-                            {0, percepts.forward[i]};
+      exploredWorld[{currentCoords.x + i + 1, currentCoords.y}] = {
+          0, percepts.forward[i]};
     };
     for (int i = 0; i < percepts.left.size(); i++) {
-      exploredWorld[{currentCoords.x, currentCoords.y + i + 1}] = {0, percepts.left[i]};
+      exploredWorld[{currentCoords.x, currentCoords.y + i + 1}] = {
+          0, percepts.left[i]};
     };
     for (int i = 0; i < percepts.right.size(); i++) {
-      exploredWorld[{currentCoords.x, currentCoords.y - i - 1}] = {0, percepts.right[i]};
+      exploredWorld[{currentCoords.x, currentCoords.y - i - 1}] = {
+          0, percepts.right[i]};
     };
     break;
   }
