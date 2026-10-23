@@ -16,72 +16,57 @@ void WorldModel::ExploreWorld(Percepts &percepts) {
   // only add visit if after step you land in the same node, me thinks
   auto it = exploredWorld.find(currentCoords);
   if (it != exploredWorld.end()) {
-    int exploredX = it->first.x;
-    int exploredY = it->first.y;
-
-    if (exploredX == currentCoords.x && exploredY == currentCoords.y) {
+    if (it->first == currentCoords) {
       it->second.visits++;
       it->second.cellType = percepts.current[0];
     }
 
   } else
-    exploredWorld[currentCoords] = {0, percepts.current[0]};
+      exploredWorld.insert({{currentCoords}, {0, percepts.current[0]}});
 
   switch (orientation) {
   case Up:
     for (int i = 0; i < percepts.forward.size(); i++) {
-      exploredWorld[{currentCoords.x, currentCoords.y + i + 1}] = {
-          0, percepts.forward[i]};
+      exploredWorld[{currentCoords.x, currentCoords.y + i + 1}].cellType = percepts.forward[i];
     };
     for (int i = 0; i < percepts.left.size(); i++) {
-      exploredWorld[{currentCoords.x - i - 1, currentCoords.y}] = {
-          0, percepts.left[i]};
+      exploredWorld[{currentCoords.x - i - 1, currentCoords.y}].cellType = percepts.left[i];
     };
     for (int i = 0; i < percepts.right.size(); i++) {
-      exploredWorld[{currentCoords.x + i + 1, currentCoords.y}] = {
-          0, percepts.right[i]};
+      exploredWorld[{currentCoords.x + i + 1, currentCoords.y}].cellType = percepts.right[i];
     };
     break;
   case Down:
     for (int i = 0; i < percepts.forward.size(); i++) {
-      exploredWorld[{currentCoords.x, currentCoords.y - i - 1}] = {
-          0, percepts.forward[i]};
+        exploredWorld[{currentCoords.x, currentCoords.y - i - 1}].cellType = percepts.forward[i];
     };
     for (int i = 0; i < percepts.left.size(); i++) {
-      exploredWorld[{currentCoords.x + i + 1, currentCoords.y}] = {
-          0, percepts.left[i]};
+      exploredWorld[{currentCoords.x + i + 1, currentCoords.y}].cellType = percepts.left[i];
     };
     for (int i = 0; i < percepts.right.size(); i++) {
-      exploredWorld[{currentCoords.x - i - 1, currentCoords.y}] = {
-          0, percepts.right[i]};
+      exploredWorld[{currentCoords.x - i - 1, currentCoords.y}].cellType = percepts.right[i];
     };
     break;
   case Left:
     for (int i = 0; i < percepts.forward.size(); i++) {
-      exploredWorld[{currentCoords.x - i - 1, currentCoords.y}] = {
-          0, percepts.forward[i]};
+        exploredWorld[{currentCoords.x - i - 1, currentCoords.y}].cellType = percepts.forward[i];
     };
     for (int i = 0; i < percepts.left.size(); i++) {
-      exploredWorld[{currentCoords.x, currentCoords.y - i - 1}] = {
-          0, percepts.left[i]};
+        exploredWorld[{currentCoords.x, currentCoords.y - i - 1}].cellType = percepts.left[i];
     };
     for (int i = 0; i < percepts.right.size(); i++) {
-      exploredWorld[{currentCoords.x, currentCoords.y + i + 1}] = {
-          0, percepts.right[i]};
+        exploredWorld[{currentCoords.x, currentCoords.y + i + 1}].cellType = percepts.right[i];
     };
     break;
   case Right:
     for (int i = 0; i < percepts.forward.size(); i++) {
-      exploredWorld[{currentCoords.x + i + 1, currentCoords.y}] = {
-          0, percepts.forward[i]};
+        exploredWorld[{currentCoords.x + i + 1, currentCoords.y}].cellType = percepts.forward[i];
     };
     for (int i = 0; i < percepts.left.size(); i++) {
-      exploredWorld[{currentCoords.x, currentCoords.y + i + 1}] = {
-          0, percepts.left[i]};
+      exploredWorld[{currentCoords.x, currentCoords.y + i + 1}].cellType = percepts.left[i];
     };
     for (int i = 0; i < percepts.right.size(); i++) {
-      exploredWorld[{currentCoords.x, currentCoords.y - i - 1}] = {
-          0, percepts.right[i]};
+      exploredWorld[{currentCoords.x, currentCoords.y - i - 1}].cellType = percepts.right[i];
     };
     break;
   }
